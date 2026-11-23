@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="light dark" />
+  <script>
+    try {
+      document.querySelector('meta[name="color-scheme"]').content = localStorage.getItem("color-scheme") ?? "light dark";
+    } catch (e) {}
+  </script>
+  <title>Solutoday — Informe Empresarial · Ítem 4 (Firewall, Límites de Tráfico y Observabilidad)</title>
+  <link rel="stylesheet" href="./portal.css" />
+  <style>
+    .report-shell {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 2rem 1.4rem 4rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.75rem;
+    }
+    .hero-card {
+      padding: 2rem 2.2rem;
+      border-radius: 1.25rem;
+      background: linear-gradient(135deg, #0b1e36 0%, #0f3a4a 100%);
+      color: #ffffff;
+      box-shadow: var(--shadow-card);
+    }
+    .hero-kicker {
+      font-size: 0.76rem;
+      font-weight: 800;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      color: #5eead4;
+      margin-bottom: 0.5rem;
+    }
+    .hero-title {
+      font-size: 1.9rem;
+      font-weight: 900;
+      line-height: 1.2;
+      margin: 0 0 0.75rem;
+      color: #ffffff;
+    }
+    .hero-sub {
+      font-size: 0.96rem;
+      line-height: 1.6;
+      color: #cbd5e1;
+      margin: 0 0 1.25rem;
+      max-width: 82ch;
+    }
+    .action-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.65rem;
+      margin-bottom: 1.1rem;
+    }
+    .btn-dl {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.55rem 1rem;
+      border-radius: 0.6rem;
+      font-size: 0.84rem;
+      font-weight: 700;
+      text-decoration: none;
+      transition: transform 0.12s ease, opacity 0.12s ease;
+    }
+    .btn-dl:hover { opacity: 0.92; transform: translateY(-1px); }
+    .btn-primary { background: #14b8a6; color: #042f2e; }
+    .btn-secondary { background: rgba(255,255,255,0.12); color: #f8fafc; border: 1px solid rgba(255,255,255,0.22); }
+    .hero-meta {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 0.5rem;
+      font-size: 0.8rem;
+      color: #94a3b8;
+      border-top: 1px solid rgba(255,255,255,0.16);
+      padding-top: 0.85rem;
+    }
+    .hero-meta strong { color: #f1f5f9; }
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 0.9rem;
+    }
+    .kpi-card {
+      padding: 1.1rem 1.25rem;
+      border-radius: 0.95rem;
+      border: 1px solid var(--border);
+      border-top: 3.5px solid #0f766e;
+      background: var(--card);
+      box-shadow: var(--shadow-card);
+    }
+    .kpi-val {
+      font-size: 1.55rem;
+      font-weight: 900;
+      color: #0f766e;
+      line-height: 1.15;
+    }
+    .kpi-note {
+      font-size: 0.8rem;
+      color: var(--muted-foreground);
+      line-height: 1.45;
+      margin-top: 0.3rem;
+    }
+    .section-card {
+      padding: 1.65rem 1.8rem;
+      border-radius: 1.1rem;
+      border: 1px solid var(--border);
+      background: var(--card);
+      box-shadow: var(--shadow-card);
+      display: flex;
+      flex-direction: column;
+      gap: 1.05rem;
+    }
+    .sec-head {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 0.5rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.65rem;
+    }
+    .sec-title { font-size: 1.25rem; font-weight: 850; margin: 0; color: var(--foreground); }
+    .sec-tag { font-size: 0.74rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: #0f766e; }
+    .two-col {
+      display: grid;
+      grid-template-columns: repeat(1, minmax(0, 1fr));
+      gap: 1rem;
+    }
+    @media (min-width: 820px) { .two-col { grid-template-columns: 1fr 1fr; } }
+    .nar-box {
+      border-radius: 0.85rem;
+      padding: 1rem 1.15rem;
+      border: 1px solid var(--border);
+      font-size: 0.88rem;
+      line-height: 1.55;
+    }
+    .nar-box.risk { background: color-mix(in oklab, #dc2626 6%, var(--card)); border-top: 3.5px solid #dc2626; }
+    .nar-box.sol  { background: color-mix(in oklab, #059669 6%, var(--card)); border-top: 3.5px solid #059669; }
+    .nar-title { font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; display: block; }
+    .nar-box.risk .nar-title { color: #dc2626; }
+    .nar-box.sol .nar-title  { color: #059669; }
+    .nar-box ul { margin: 0; padding-left: 1.15rem; display: flex; flex-direction: column; gap: 0.4rem; }
+    .diagram-frame {
+      border: 1px solid var(--border);
+      border-radius: 0.9rem;
+      overflow: hidden;
+      background: #ffffff;
+    }
+    .df-header {
+      background: #0f172a;
+      color: #ffffff;
+      padding: 0.65rem 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.84rem;
+      font-weight: 700;
+    }
+    .df-badge {
+      background: #0284c7;
+      color: #ffffff;
+      font-size: 0.7rem;
+      font-weight: 800;
+      padding: 0.18rem 0.65rem;
+      border-radius: 999px;
+      text-transform: uppercase;
+    }
+    .df-body { padding: 0.9rem; background: #ffffff; text-align: center; }
+    .df-body img { max-width: 100%; height: auto; display: block; margin: 0 auto; }
+    .df-caption {
+      background: #f8fafc;
+      color: #475569;
+      border-top: 1px solid #e2e8f0;
+      padding: 0.6rem 1rem;
+      font-size: 0.82rem;
+    }
+    .ev-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(195px, 1fr));
+      gap: 0.85rem;
+    }
+    .ev-card {
+      background: color-mix(in oklab, #10b981 8%, var(--card));
+      border: 1px solid color-mix(in oklab, #10b981 35%, var(--border));
+      border-radius: 0.75rem;
+      padding: 0.85rem 1rem;
+    }
+    .ev-val { font-size: 1.15rem; font-weight: 900; color: #059669; margin-bottom: 0.25rem; }
+    .ev-lbl { font-size: 0.8rem; color: var(--foreground); line-height: 1.4; }
+    table.clean-table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+    table.clean-table th, table.clean-table td { text-align: left; padding: 0.7rem 0.8rem; border-bottom: 1px solid var(--border); vertical-align: top; line-height: 1.48; }
+    table.clean-table th { background: #0f172a; color: #ffffff; font-size: 0.76rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; }
+    a.pr-url { color: #0284c7; font-weight: 700; text-decoration: underline; word-break: break-all; }
+    .callout {
+      border-radius: 0.8rem;
+      padding: 1rem 1.2rem;
+      font-size: 0.88rem;
+      line-height: 1.55;
+      background: color-mix(in oklab, #0284c7 7%, var(--card));
+      border: 1px solid color-mix(in oklab, #0284c7 30%, var(--border));
+      border-left: 4px solid #0284c7;
+    }
+    .callout-title { display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: #0284c7; margin-bottom: 0.3rem; }
+    .footer-note { text-align: center; font-size: 0.8rem; color: var(--muted-foreground); padding-top: 0.5rem; }
+  </style>
+</head>
+<body>
+  <main class="report-shell">
+    <header class="hero-card">
+      <div class="hero-kicker">Solutoday · Informe Empresarial de Entrega · Ítem 4 (EP-04)</div>
+      <h1 class="hero-title">Firewall, límites de tráfico y observabilidad técnica</h1>
+      <p class="hero-sub">
+        Entrega consolidada de los dos Pull Requests del Ítem 4 integrados en <code>Solutoday/web-v2</code>:
+        endurecimiento del perímetro HTTP con cuotas diferenciadas por canal, cabeceras defensivas, protección del puerto administrativo en Docker,
+        plantilla declarativa de Cloudflare WAF y observabilidad centralizada con alertas técnicas saneadas.
+      </p>
+      <div class="action-bar">
+        <a class="btn-dl btn-primary" href="./Solutoday-Item-4-Informe-empresarial.pdf" download>Descargar PDF (7 págs.)</a>
+        <a class="btn-dl btn-secondary" href="./Solutoday-Item-4-Informe-empresarial.docx" download>Descargar Word (.docx)</a>
+        <a class="btn-dl btn-secondary" href="./item-04-firewall-observabilidad.html" target="_blank" rel="noopener">Abrir Visor Interactivo Archify ↗</a>
+        <a class="btn-dl btn-secondary" href="./Solutoday-Item-4-Anexo-y-resultados.zip" download>Descargar Anexo y Resultados (.zip)</a>
+      </div>
+      <div class="hero-meta">
+        <span><strong>Repositorio y versión:</strong> Solutoday/web-v2 · rama <code>develop</code> @ <code>974eb02</code> (árbol <code>f9913444</code>)</span>
+        <span><strong>Fecha de cierre:</strong> 23 de noviembre de 2026</span>
+      </div>
+    </header>
+
+    <section class="kpi-grid">
+      <article class="kpi-card">
+        <div class="kpi-val">2 / 2 PR</div>
+        <div class="kpi-note">PR #11 y PR #12 fusionados en <code>develop</code> (25 archivos).</div>
+      </article>
+      <article class="kpi-card">
+        <div class="kpi-val">168 / 1,244</div>
+        <div class="kpi-note">Pruebas y aserciones en verde (0 fallos, Ítems 2+3+4).</div>
+      </article>
+      <article class="kpi-card">
+        <div class="kpi-val">4 Canales</div>
+        <div class="kpi-note">API 5xx, cola, integraciones IA/FCM y pagos observados.</div>
+      </article>
+      <article class="kpi-card">
+        <div class="kpi-val">0% Fugas</div>
+        <div class="kpi-note">Secretos redactados y PII enmascarado en vivo.</div>
+      </article>
+    </section>
+
+    <div class="callout">
+      <span class="callout-title">Estado actual del código y alcance verificado</span>
+      El 100% del desarrollo del Ítem 4 está fusionado en <code>develop</code> (commit <code>974eb02</code>) y verificado en laboratorio aislado con MySQL 8.4.13 y receptores reales SMTP/HTTP.
+      Las apps móviles (<code>clientes-v2</code> y <code>proveedor-v2</code>) fueron verificadas como consumidoras y no requieren cambios de código.
+      El despliegue en servidores y la activación en la consola de Cloudflare corresponden a un ítem posterior de despliegue, fuera del alcance de esta entrega.
+    </div>
+
+    <!-- CORTE 1: PR #11 -->
+    <section class="section-card">
+      <div class="sec-head">
+        <h2 class="sec-title">1. Corte 1 (TK-04.01) · Proxy confiable, WAF y límites de tráfico</h2>
+        <span class="sec-tag"><a class="pr-url" href="https://github.com/Solutoday/web-v2/pull/11" target="_blank" rel="noopener">PR #11 · Merge 5e3280b ↗</a></span>
+      </div>
+      <div class="two-col">
+        <div class="nar-box risk">
+          <span class="nar-title">Problema inicial e impacto potencial</span>
+          <ul>
+            <li>Solo existía un limitador genérico <code>api</code> (60 req/min); <code>/api/login</code>, recuperación de clave y formularios públicos carecían de cuota dedicada.</li>
+            <li><code>TrustProxies</code> no resolvía <code>CF-Connecting-IP</code> detrás de Cloudflare y faltaban cabeceras defensivas (<code>nosniff</code>, <code>SAMEORIGIN</code>, <code>Referrer-Policy</code>, <code>HSTS</code>).</li>
+            <li><code>ec2/server/config/docker-compose.yml</code> publicaba el panel del proxy (<code>81:81</code>) en todas las interfaces.</li>
+          </ul>
+        </div>
+        <div class="nar-box sol">
+          <span class="nar-title">Solución implementada en PR #11</span>
+          <ul>
+            <li><strong>4 perfiles <code>RateLimiter</code>:</strong> <code>auth-login</code> (IP + cuenta normalizada), <code>password-recovery</code>, <code>public-forms</code> y <code>webhooks</code> (alta cuota).</li>
+            <li><strong><code>TrustProxies</code> + <code>SecurityHeaders</code>:</strong> IP real validada solo desde <code>TRANSPORT_TRUSTED_PROXIES</code> y las 4 cabeceras defensivas activas globalmente.</li>
+            <li><strong>Origen endurecido:</strong> puerto <code>127.0.0.1:81:81</code> en Docker y guía declarativa <code>CLOUDFLARE-WAF-PLANTILLA.md</code>.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="diagram-frame">
+        <div class="df-header"><span>Diagrama original del PR #11 · Arquitectura Antes vs. Después (TK-04.01)</span><span class="df-badge">PR #11 · Figura 1</span></div>
+        <div class="df-body"><img src="./diagramas/pr11-antes-despues.png" alt="Diagrama original PR #11 Antes vs Después" /></div>
+        <div class="df-caption">Figura 1. Diagrama original del PR #11 · <a class="pr-url" href="https://github.com/Solutoday/web-v2/pull/11" target="_blank" rel="noopener">Abrir fuente en GitHub ↗</a></div>
+      </div>
+
+      <div class="diagram-frame">
+        <div class="df-header"><span>Diagrama original del PR #11 · Secuencia de una petición HTTP (TK-04.01)</span><span class="df-badge">PR #11 · Figura 2</span></div>
+        <div class="df-body"><img src="./diagramas/pr11-secuencia-http.png" alt="Diagrama original PR #11 Secuencia HTTP" /></div>
+        <div class="df-caption">Figura 2. Diagrama original del PR #11 · <a class="pr-url" href="https://github.com/Solutoday/web-v2/pull/11" target="_blank" rel="noopener">Abrir fuente en GitHub ↗</a></div>
+      </div>
+
+      <div class="ev-grid">
+        <div class="ev-card"><div class="ev-val">HTTP 403</div><div class="ev-lbl">Tráfico HTTP plano sin proxy HTTPS rechazado de inmediato.</div></div>
+        <div class="ev-card"><div class="ev-val">4 Cabeceras</div><div class="ev-lbl"><code>nosniff</code>, <code>SAMEORIGIN</code>, <code>Referrer-Policy</code> y <code>HSTS</code> emitidas.</div></div>
+        <div class="ev-card"><div class="ev-val">200 → 429</div><div class="ev-lbl">Intento #4 bloqueado; otra IP en <code>CF-Connecting-IP</code> recibió <code>200</code>.</div></div>
+        <div class="ev-card"><div class="ev-val">127.0.0.1:81</div><div class="ev-lbl">Puerto administrativo de Docker cerrado al exterior.</div></div>
+      </div>
+    </section>
+
+    <!-- CORTE 2: PR #12 -->
+    <section class="section-card">
+      <div class="sec-head">
+        <h2 class="sec-title">2. Corte 2 (TK-04.02) · Observabilidad de fallos y alertas técnicas</h2>
+        <span class="sec-tag"><a class="pr-url" href="https://github.com/Solutoday/web-v2/pull/12" target="_blank" rel="noopener">PR #12 · Merge 974eb02 ↗</a></span>
+      </div>
+      <div class="two-col">
+        <div class="nar-box risk">
+          <span class="nar-title">Brecha inicial e impacto potencial</span>
+          <ul>
+            <li><code>Handler::reportable</code> estaba vacío y no existía listener <code>Queue::failing</code> para trabajos de cola en <code>supervisord</code>.</li>
+            <li>Fallos en API <code>5xx</code>, pagos o proveedores externos (OpenAI, Firebase) no generaban alerta al responsable ni <code>correlation_id</code>.</li>
+            <li>Sin un redactor central, los logs y avisos podían exponer tokens, contraseñas, llaves API o datos personales de clientes.</li>
+          </ul>
+        </div>
+        <div class="nar-box sol">
+          <span class="nar-title">Solución implementada en PR #12</span>
+          <ul>
+            <li><strong>4 fuentes conectadas:</strong> API <code>5xx</code> (<code>Handler</code>), Cola (<code>Queue::failing</code>), Integraciones (IA/Firebase) y Pagos (<code>FinancialOperations</code>).</li>
+            <li><strong><code>ObservabilitySanitizer</code>:</strong> reemplaza secretos (<code>Bearer</code>, JWT, <code>password</code>, <code>api_key</code>, <code>chat_gpt_key</code>) por <code>[REDACTED]</code> y enmascara correos/teléfonos.</li>
+            <li><strong><code>TechnicalAlertService</code> + CLI:</strong> canal JSON <code>observability</code>, alertas SMTP/Webhook con <code>cooldown</code> (300 s) y comando <code>observability:test-alert</code>.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="diagram-frame">
+        <div class="df-header"><span>Diagrama original del PR #12 · Arquitectura Antes vs. Después (TK-04.02)</span><span class="df-badge">PR #12 · Figura 3</span></div>
+        <div class="df-body"><img src="./diagramas/pr12-antes-despues.png" alt="Diagrama original PR #12 Antes vs Después" /></div>
+        <div class="df-caption">Figura 3. Diagrama original del PR #12 · <a class="pr-url" href="https://github.com/Solutoday/web-v2/pull/12" target="_blank" rel="noopener">Abrir fuente en GitHub ↗</a></div>
+      </div>
+
+      <div class="diagram-frame">
+        <div class="df-header"><span>Diagrama original del PR #12 · Captura, redacción y alerta con cooldown</span><span class="df-badge">PR #12 · Figura 4</span></div>
+        <div class="df-body"><img src="./diagramas/pr12-secuencia-alertas.png" alt="Diagrama original PR #12 Secuencia de alertas" /></div>
+        <div class="df-caption">Figura 4. Diagrama original del PR #12 · <a class="pr-url" href="https://github.com/Solutoday/web-v2/pull/12" target="_blank" rel="noopener">Abrir fuente en GitHub ↗</a></div>
+      </div>
+
+      <div class="ev-grid">
+        <div class="ev-card"><div class="ev-val">2 Correos SMTP</div><div class="ev-lbl">Recibidos en <code>ops-alerta@example.test</code> con asunto y <code>correlation_id</code>.</div></div>
+        <div class="ev-card"><div class="ev-val">2 Webhooks</div><div class="ev-lbl">Payloads JSON recibidos en vivo con contexto saneado.</div></div>
+        <div class="ev-card"><div class="ev-val">[REDACTED]</div><div class="ev-lbl">Bearer, password, JWT, <code>chat_gpt_key</code> y <code>api_key</code> ocultos.</div></div>
+        <div class="ev-card"><div class="ev-val">Cooldown 300 s</div><div class="ev-lbl">2.º reporte idéntico registrado en log sin reenviar duplicado.</div></div>
+      </div>
+    </section>
+
+    <!-- TRAZABILIDAD Y VALIDACIÓN -->
+    <section class="section-card">
+      <div class="sec-head">
+        <h2 class="sec-title">3. Trazabilidad de Pull Requests y validación integrada</h2>
+        <span class="sec-tag">168 pruebas · 1,244 aserciones · 0 fallos</span>
+      </div>
+      <table class="clean-table">
+        <thead>
+          <tr>
+            <th>PR / Trello</th>
+            <th>Commits</th>
+            <th>Control y capacidad entregada</th>
+            <th>Validación específica</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><a class="pr-url" href="https://github.com/Solutoday/web-v2/pull/11" target="_blank" rel="noopener">PR #11 ↗</a><br/><strong>TK-04.01</strong></td>
+            <td>Rama: <code>ca8ee66</code><br/>Merge: <code>5e3280b</code></td>
+            <td>Extracción confiable de <code>CF-Connecting-IP</code> sin spoofing, 4 cabeceras HTTP defensivas con <code>HSTS</code>, 4 perfiles de límite de tráfico (login, recuperación, formularios y webhooks), cierre del puerto <code>81</code> en Docker y plantilla Cloudflare WAF.</td>
+            <td>14 pruebas / 81 aserciones (0 fallos) + trazas HTTP en vivo.</td>
+          </tr>
+          <tr>
+            <td><a class="pr-url" href="https://github.com/Solutoday/web-v2/pull/12" target="_blank" rel="noopener">PR #12 ↗</a><br/><strong>TK-04.02</strong></td>
+            <td>Rama: <code>804eb84</code> / <code>0040a96</code><br/>Merge: <code>974eb02</code></td>
+            <td>Captura centralizada de fallos en 4 fuentes (API <code>5xx</code>, cola, integraciones IA/Firebase y pagos), canal estructurado con <code>correlation_id</code>, redacción automática de secretos/PII, alertas SMTP/Webhook con <code>cooldown</code> y comando de verificación.</td>
+            <td>6 pruebas / 34 aserciones (0 fallos) + entrega real SMTP y Webhook en vivo.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <table class="clean-table">
+        <thead>
+          <tr>
+            <th>Batería / Prueba</th>
+            <th>Ambiente ejecutado</th>
+            <th>Resultado</th>
+            <th>Evidencia</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Suite general integrada</strong> (Ítems 2 + 3 + 4)</td>
+            <td>PHP 8.4.27 · PHPUnit 11.5.58 · MySQL 8.4.13 aislado</td>
+            <td><strong>160 pruebas / 1,193 aserciones (0 fallos)</strong></td>
+            <td><code>regresion-general.junit.xml</code></td>
+          </tr>
+          <tr>
+            <td><strong>Suite financiera dedicada</strong></td>
+            <td>PHP 8.4.27 · PHPUnit 11.5.58 · MySQL 8.4.13 aislado</td>
+            <td><strong>8 pruebas / 51 aserciones (0 fallos)</strong></td>
+            <td><code>regresion-finanzas.junit.xml</code></td>
+          </tr>
+          <tr>
+            <td><strong>Trazas HTTP en vivo</strong> (<code>TK-04.01</code>)</td>
+            <td>Servidor PHP 8.4 local con proxy confiable simulado</td>
+            <td><strong>5/5 controles verificados</strong></td>
+            <td><code>trazas-http-tk0401.txt</code></td>
+          </tr>
+          <tr>
+            <td><strong>Entrega SMTP + Webhook</strong> (<code>TK-04.02</code>)</td>
+            <td>Receptores reales SMTP y HTTP en red aislada</td>
+            <td><strong>2 SMTP + 2 Webhooks · 1 suprimido</strong></td>
+            <td><code>alerta-en-vivo-smtp-webhook.txt</code></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ENLACES Y REFERENCIA POSTERIOR -->
+    <section class="section-card">
+      <div class="sec-head">
+        <h2 class="sec-title">4. Guía de referencia para despliegue posterior y enlaces directos</h2>
+        <span class="sec-tag">Fuera del alcance de despliegue del Ítem 4</span>
+      </div>
+      <table class="clean-table">
+        <thead>
+          <tr>
+            <th>Referencia</th>
+            <th>Estado</th>
+            <th>Enlace directo</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>PR #11 · TK-04.01</strong></td>
+            <td>Fusionado (<code>5e3280b</code>)</td>
+            <td><a class="pr-url" href="https://github.com/Solutoday/web-v2/pull/11" target="_blank" rel="noopener">https://github.com/Solutoday/web-v2/pull/11</a></td>
+          </tr>
+          <tr>
+            <td><strong>PR #12 · TK-04.02</strong></td>
+            <td>Fusionado (<code>974eb02</code>)</td>
+            <td><a class="pr-url" href="https://github.com/Solutoday/web-v2/pull/12" target="_blank" rel="noopener">https://github.com/Solutoday/web-v2/pull/12</a></td>
+          </tr>
+          <tr>
+            <td><strong>Commit final integrado (<code>develop</code>)</strong></td>
+            <td>Verificado (<code>f9913444</code>)</td>
+            <td><a class="pr-url" href="https://github.com/Solutoday/web-v2/commit/974eb0269f32e1fb4318fe56e9665aad81ecd8b9" target="_blank" rel="noopener">https://github.com/Solutoday/web-v2/commit/974eb0269f32e1fb4318fe56e9665aad81ecd8b9</a></td>
+          </tr>
+          <tr>
+            <td><strong>Épica EP-04 en Trello</strong></td>
+            <td>Validación Solutoday</td>
+            <td><a class="pr-url" href="https://trello.com/c/iAPnTdbS" target="_blank" rel="noopener">https://trello.com/c/iAPnTdbS</a></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <footer class="footer-note">
+      Solutoday · Informe Empresarial del Ítem 4 (EP-04) · 23 de noviembre de 2026 · Evidencia libre de credenciales reales y datos personales.
+    </footer>
+  </main>
+</body>
+</html>
